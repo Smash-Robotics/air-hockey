@@ -28,6 +28,8 @@ def get_disk_center(mask, frame):
     if circles is not None:
         circles = np.uint16(np.around(circles))
         for i in circles[0,:]:
+            # drawing circle center and perimeter
+            # comment this on real application to minimize lag
             cv2.circle(frame, (i[0], i[1]), i[2], (255, 0, 0), 3)
             cv2.circle(frame, (i[0], i[1]), 2, (0, 0, 0), 3)
             circleCenter = (i[0], i[1])
@@ -37,7 +39,7 @@ def get_disk_center(mask, frame):
 
 
 '''
-class to save disk current and previous position and make it easy to get necessary information with methods
+class to save disk current and previous position, make it easy to get necessary information with methods and make all the raycast
 '''
 class GlobalDisk:
     def __init__(self) -> None:
@@ -45,7 +47,9 @@ class GlobalDisk:
         self.prev_pos = None
 
     def new_pos(self, pos:np.array):
+        # setting previous position as current position
         self.prev_pos = self.current_pos
+        # updating current position to position received
         self.current_pos = pos
 
     '''
@@ -54,6 +58,7 @@ class GlobalDisk:
     def get_direction(self) -> tuple[int, int]:
         if self.current_pos == None or self.prev_pos == None:
             return None
+        # need to converto to int because position is a np.array and it represent values as a unsigned 2 bytes integer
         x0 = int(self.current_pos[0])
         x1 = int(self.prev_pos[0])
         y0 = int(self.current_pos[1])
@@ -85,42 +90,60 @@ class GlobalDisk:
         #            height
         pos = list(self.current_pos)
         direction = self.get_direction()
+
+        # ignoringn cases where previous position isnt set
         if direction is None:
             return None
         if pos[1] < defense_line:
             return None
+
         direction = list(direction)
+
+        # ignoring case where disk is going to player side
         if direction[1] > 0: return
+
         for _ in range(depth):
             
+            # saving original position of disk or position where disk would collide with wall
+            # we just use it to draw, so can be commented on final application
             ori_pos = [i for i in pos]
 
             px, py = pos
             m = get_angle(direction[0], direction[1])
 
+            # getting what wall disk is going to hit based on its current direction or the direction reflected if it already collided with a wall 
             yline = line1x if direction[0] > 0 else line0x
+
+            # equacao da reta
             y = m * yline + (py - m * px)
 
             if not (y > height or y < defense_line):
+                # point of collision with wall
                 pos[1] = int(y)
                 pos[0] = yline
+                # reflecting direction on wall
                 direction[0] = -direction[0]
-                
-            xline = height if direction[1] > 0 else defense_line
-            x = (xline - (py - m * px)) / m
+                            
+            # equacao da reta
+            x = (defense_line - (py - m * px)) / m
 
             if not (x < line0x or x > line1x):
+                # point of collision with defense line
                 pos[0] = int(x)
-                pos[1] = xline
+                pos[1] = defense_line
+
+                # drawing prediction, can be commented on final application
                 cv2.line(img, tuple(ori_pos), tuple(pos), line_color, 2)
                 cv2.circle(img, tuple(pos), 2, point_color, 5)
+
+                # returning point of collision with defense line
                 return pos
 
+            # drawing prediction, can be commented on final application
             cv2.line(img, tuple(ori_pos), tuple(pos), line_color, 2)
-            
+            cv2.circle(img, tuple(pos), 2, point_color, 5)
 
-'''
-'''
+
 def draw_horizontal_line(img:np.array, y:int, color:tuple[int, int, int]):
     img = cv2.line(img, (0, y), (500, y), color, 2)
 
@@ -129,7 +152,7 @@ def draw_vertical_line(img:np.array, x:int, color:tuple[int, int, int]):
     img = cv2.line(img, (x, 0), (x, 1500), color, 2)
 
 def get_angle(x:int, y:int) -> float:
-    if x == 0:
+    if x == 0 or y == 0:
         return np.pi
     return math.atan(y/x)
 
