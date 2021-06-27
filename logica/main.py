@@ -12,12 +12,13 @@ if __name__ == "__main__":
 	defense_line_y = 200
 	lateral_line0_x = 30
 	lateral_line1_x = 450
-	disk_color = (255,   0,   0) # RGB
 	disk_lower = (  0, 100, 100) # HSV
 	disk_upper = ( 20, 255, 255) # HSV
 
 	if not simulador:
 		cap = cv2.VideoCapture(0)
+
+	disk = GlobalDisk()
 	
 	while True:
 		
@@ -31,17 +32,16 @@ if __name__ == "__main__":
 
 		center = get_disk_center(mask, img)
 		if center != None:
-			GlobalDisk.new_pos(center)
+			disk.new_pos(center)
 
-		GlobalDisk.draw_direction_line(img, (100, 100, 100))
-
+		disk.draw_direction_line(img, (100, 100, 100))
 
 		# drawing map important things
 		draw_horizontal_line(img, defense_line_y, (250, 0, 255))
 		draw_vertical_line(img, lateral_line0_x, (250, 0, 255))
 		draw_vertical_line(img, lateral_line1_x, (250, 0, 255))
 		
-		p = GlobalDisk.intersections(img, (255, 255, 255), (0x00, 0xaA, 0xF0 + 15), lateral_line0_x, lateral_line1_x, defense_line_y, 900, 4)
+		p = disk.intersections(img, (255, 255, 255), (0, 170, 255), lateral_line0_x, lateral_line1_x, defense_line_y, 900, 4)
 		print(p)
 
 		cv2.imshow("mask", img)

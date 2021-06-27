@@ -28,12 +28,8 @@ def get_disk_center(mask, frame):
     if circles is not None:
         circles = np.uint16(np.around(circles))
         for i in circles[0,:]:
-
-            # cv2.circle(img, center,      radius, color[, thickness[, lineType[, shift]]])
             cv2.circle(frame, (i[0], i[1]), i[2], (255, 0, 0), 3)
-            # draw the center of the circle
             cv2.circle(frame, (i[0], i[1]), 2, (0, 0, 0), 3)
-
             circleCenter = (i[0], i[1])
             break
 
@@ -43,42 +39,40 @@ def get_disk_center(mask, frame):
 '''
 class to save disk current and previous position and make it easy to get necessary information with methods
 '''
-class GlobalDisk():
-    current_pos = None
-    prev_pos = None
+class GlobalDisk:
+    def __init__(self) -> None:
+        self.current_pos = None
+        self.prev_pos = None
 
-    def new_pos(pos):
-        GlobalDisk.prev_pos = GlobalDisk.current_pos
-        GlobalDisk.current_pos = pos
+    def new_pos(self, pos:np.array):
+        self.prev_pos = self.current_pos
+        self.current_pos = pos
 
-    def get_direction() -> tuple[int, int]:
-        if GlobalDisk.current_pos == None or GlobalDisk.prev_pos == None:
+    '''
+    return the direction that the disk is going
+    '''
+    def get_direction(self) -> tuple[int, int]:
+        if self.current_pos == None or self.prev_pos == None:
             return None
-        x0 = int(GlobalDisk.current_pos[0])
-        x1 = int(GlobalDisk.prev_pos[0])
-        y0 = int(GlobalDisk.current_pos[1])
-        y1 = int(GlobalDisk.prev_pos[1])
+        x0 = int(self.current_pos[0])
+        x1 = int(self.prev_pos[0])
+        y0 = int(self.current_pos[1])
+        y1 = int(self.prev_pos[1])
         return (x0 - x1, y0 - y1)
 
-    def get_velocity() -> int:
-        if type(GlobalDisk.current_pos) != type(None) and type(GlobalDisk.prev_pos) != type(None):
-            x, y = (GlobalDisk.get_direction()) ** 2
-            return np.sqrt(x + y)
-        return None
+    # def get_velocity(self) -> int:
+    #     if type(self.current_pos) != type(None) and type(self.prev_pos) != type(None):
+    #         x, y = (self.get_direction()) ** 2
+    #         return np.sqrt(x + y)
+    #     return None
 
-    def get_angle(x, y):
-        if x == 0:
-            return 3.1415
-        return math.atan(y/x)
-
-
-    def draw_direction_line(img, color):
-        direction = GlobalDisk.get_direction()
+    def draw_direction_line(self, img:np.array, color:tuple[int, int, int]):
+        direction = self.get_direction()
         if direction == None:
             return
-        cv2.line(img, tuple(GlobalDisk.current_pos), tuple(np.array(GlobalDisk.current_pos) + np.array(direction)), color, 2)
+        cv2.line(img, tuple(self.current_pos), tuple(np.array(self.current_pos) + np.array(direction)), color, 2)
 
-    def intersections(img, line_color:tuple[int, int, int], point_color:tuple[int, int, int], line0x:int, line1x:int, defense_line:int, height:int, depth:int):
+    def intersections(self, img:np.array, line_color:tuple[int, int, int], point_color:tuple[int, int, int], line0x:int, line1x:int, defense_line:int, height:int, depth:int):
         #          /--------\
         #          | (def)  |
         #          | ooooo  |
@@ -89,8 +83,8 @@ class GlobalDisk():
         #          |        |
         #          \--------/
         #            height
-        pos = list(GlobalDisk.current_pos)
-        direction = GlobalDisk.get_direction()
+        pos = list(self.current_pos)
+        direction = self.get_direction()
         if direction is None:
             return None
         if pos[1] < defense_line:
@@ -102,7 +96,7 @@ class GlobalDisk():
             ori_pos = [i for i in pos]
 
             px, py = pos
-            m = GlobalDisk.get_angle(direction[0], direction[1])
+            m = self.get_angle(direction[0], direction[1])
 
             yline = line1x if direction[0] > 0 else line0x
             y = m * yline + (py - m * px)
@@ -127,15 +121,17 @@ class GlobalDisk():
 
 '''
 '''
-def draw_horizontal_line(img, y, color):
+def draw_horizontal_line(img:np.array, y:int, color:tuple[int, int, int]):
     img = cv2.line(img, (0, y), (500, y), color, 2)
-    return img
 
 
-def draw_vertical_line(img, x, color):
+def draw_vertical_line(img:np.array, x:int, color:tuple[int, int, int]):
     img = cv2.line(img, (x, 0), (x, 1500), color, 2)
-    return img
 
+def get_angle(x:int, y:int) -> float:
+    if x == 0:
+        return np.pi
+    return math.atan(y/x)
 
 if __name__ == "__main__":
     GlobalDisk.new_pos((2, 2))
