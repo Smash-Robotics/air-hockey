@@ -96,7 +96,7 @@ class GlobalDisk:
             ori_pos = [i for i in pos]
 
             px, py = pos
-            m = self.get_angle(direction[0], direction[1])
+            m = get_angle(direction[0], direction[1])
 
             yline = line1x if direction[0] > 0 else line0x
             y = m * yline + (py - m * px)

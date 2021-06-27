@@ -23,7 +23,7 @@ if __name__ == "__main__":
 	while True:
 		
 		if simulador:
-			img = np.array(pyautogui.screenshot(region=(1200, 200, 500, 900)))
+			img = np.array(pyautogui.screenshot(region=(1200, 200, 500, 750)))
 			img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 		else:
 			ret, img = cap.read()
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 		p = disk.intersections(img, (255, 255, 255), (0, 170, 255), lateral_line0_x, lateral_line1_x, defense_line_y, 900, 4)
 		print(p)
 
-		cv2.imshow("mask", img)
+		cv2.imshow("preview", img)
 
 		if cv2.waitKey(1) & 0xFF == ord("q"):
 			break
